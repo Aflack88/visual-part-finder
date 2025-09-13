@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Part Finder - Identify Appliance Parts Instantly</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .upload-section {
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .upload-box {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-box:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
+
+        .upload-box.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 14px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-section {
+            padding: 0 30px 30px;
+            display: none;
+        }
+
+        .preview-image {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .identify-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            width: 100%;
+        }
+
+        .identify-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .identify-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            padding: 30px;
+            background: #f8f9ff;
+            display: none;
+        }
+
+        .result-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .result-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .result-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 20px;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .result-details {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .result-price {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .confidence-badge {
+            background: #4caf50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #ff5252;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .try-another {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .try-another-btn {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .try-another-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .beta-badge {
+            background: #ff9800;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Visual Part Finder</h1>
+            <p>Snap a photo. Find the part. Fix it fast.</p>
+            <span class="beta-badge">BETA - FREE ACCESS</span>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-box" id="uploadBox">
+                <div class="upload-icon">📷</div>
+                <div class="upload-text">Upload Part Photo</div>
+                <div class="upload-subtext">or drag and drop</div>
+                <input type="file" id="fileInput" accept="image/*" />
+            </div>
+        </div>
+
+        <div class="preview-section" id="previewSection">
+            <img id="previewImage" class="preview-image" alt="Part preview" />
+            <button class="identify-button" id="identifyButton">
+                🔍 Identify This Part
+            </button>
+        </div>
+
+        <div class="loading" id="loadingSection">
+            <div class="loading-spinner"></div>
+            <p>Analyzing your part...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            Unable to identify this part. Please try a clearer photo.
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <h3 style="margin-bottom: 20px; color: #333;">Possible Matches:</h3>
+            <div id="resultsList"></div>
+            <div class="try-another">
+                <button class="try-another-btn" id="tryAnotherBtn">Try Another Photo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock parts database - in production, this would be an API call
+        const mockPartsDatabase = [
+            {
+                name: "Whirlpool Dishwasher Door Latch",
+                partNumber: "WPW10275768",
+                price: "$42.99",
+                confidence: 92,
+                image: "https://via.placeholder.com/80",
+                affiliateUrl: "https://www.repairclinic.com/PartDetail/4454219?TLSID=1779"
+            },
+            {
+                name: "GE Refrigerator Water Filter",
+                partNumber: "MWF",
+                price: "$38.50",
+                confidence: 88,
+                image: "https://via.placeholder.com/80",
+                affiliateUrl: "https://www.partselect.com/PS960022-GE-MWF.htm"
+            },
+            {
+                name: "LG Washer Door Seal",
+                partNumber: "MDS47123601",
+                price: "$125.00",
+                confidence: 85,
+                image: "https://via.placeholder.com/80",
+                affiliateUrl: "https://www.appliancepartspros.com/lg-gasket-door-mds47123601-ap4438637.html"
+            }
+        ];
+
+        // File upload handling
+        const uploadBox = document.getElementById('uploadBox');
+        const fileInput = document.getElementById('fileInput');
+        const previewSection = document.getElementById('previewSection');
+        const previewImage = document.getElementById('previewImage');
+        const identifyButton = document.getElementById('identifyButton');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsList = document.getElementById('resultsList');
+        const errorMessage = document.getElementById('errorMessage');
+        const tryAnotherBtn = document.getElementById('tryAnotherBtn');
+
+        uploadBox.addEventListener('click', () => fileInput.click());
+
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.classList.remove('dragover');
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                uploadBox.parentElement.style.display = 'none';
+                previewSection.style.display = 'block';
+                errorMessage.style.display = 'none';
+                resultsSection.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        identifyButton.addEventListener('click', async () => {
+            identifyButton.disabled = true;
+            previewSection.style.display = 'none';
+            loadingSection.style.display = 'block';
+            errorMessage.style.display = 'none';
+
+            // Simulate API call delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // In production, this would call:
+            // 1. Google Vision API for object detection
+            // 2. Our matching algorithm
+            // 3. Parts supplier APIs for real-time pricing
+
+            loadingSection.style.display = 'none';
+            displayResults();
+        });
+
+        function displayResults() {
+            resultsSection.style.display = 'block';
+            resultsList.innerHTML = '';
+
+            mockPartsDatabase.forEach(part => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                resultItem.innerHTML = `
+                    <img src="${part.image}" alt="${part.name}" class="result-image" />
+                    <div class="result-info">
+                        <div class="result-name">
+                            ${part.name}
+                            <span class="confidence-badge">${part.confidence}% Match</span>
+                        </div>
+                        <div class="result-details">Part #${part.partNumber}</div>
+                        <div class="result-price">${part.price}</div>
+                    </div>
+                `;
+                
+                resultItem.addEventListener('click', () => {
+                    // Track conversion for analytics
+                    console.log('Part clicked:', part.partNumber);
+                    // Open affiliate link in new tab
+                    window.open(part.affiliateUrl, '_blank');
+                });
+
+                resultsList.appendChild(resultItem);
+            });
+        }
+
+        tryAnotherBtn.addEventListener('click', () => {
+            previewSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+            uploadBox.parentElement.style.display = 'block';
+            identifyButton.disabled = false;
+            fileInput.value = '';
+        });
+
+        // Track page load
+        console.log('Visual Part Finder loaded - MVP Version 0.1');
+        
+        // Simple analytics
+        let identifications = 0;
+        identifyButton.addEventListener('click', () => {
+            identifications++;
+            console.log(`Identification #${identifications}`);
+            // In production: Send to Google Analytics or Mixpanel
+        });
+    </script>
+</body>
+</html>
